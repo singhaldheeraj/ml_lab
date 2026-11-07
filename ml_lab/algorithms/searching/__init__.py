@@ -1,0 +1,1 @@
+"""Step-by-step searching algorithms, organized as individual plugins."""

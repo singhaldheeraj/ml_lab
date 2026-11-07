@@ -7,15 +7,17 @@ from tkinter import messagebox, ttk
 
 from ml_lab.core.registry import discover
 from ml_lab.gui.algo_tab import AlgoTab
+from ml_lab.gui.search_tab import SearchCatalog
 
-CATEGORY_ORDER = ["Supervised", "Unsupervised", "Robotics Demos", "Reinforcement Learning"]
+CATEGORY_ORDER = ["Supervised", "Unsupervised", "Robotics Demos", "Reinforcement Learning",
+                  "Searching algorithms", "Sorting algorithms"]
 
 HOME_TEXT = """\
 ## Welcome to ML Lab
-An interactive playground for classical machine learning, robotics perception and control, and reinforcement learning, visualized step by step.
+An interactive playground for classical machine learning, robotics perception and control, reinforcement learning, and searching and sorting algorithms, visualized step by step.
 
 ## How to use
-1. Pick a top tab (Supervised / Unsupervised / Robotics Demos / Reinforcement Learning), then an algorithm from the list on the left.
+1. Pick a top tab (Supervised / Unsupervised / Robotics Demos / Reinforcement Learning / Searching algorithms / Sorting algorithms), then an algorithm from the list on the left.
 2. Adjust the parameters (hover the \u24d8 labels for hints).  'Data' parameters regenerate the dataset immediately.
 3. Press \u25b6 Run to watch the algorithm learn. Use Pause / Step to go frame by frame, Finish to jump to the result.
 4. Click on the plot to add your own data points (see the hint under the parameters).
@@ -76,6 +78,10 @@ class App(tk.Tk):
         cats = sorted({c.category for c in classes},
                       key=lambda c: (CATEGORY_ORDER.index(c) if c in CATEGORY_ORDER else 99, c))
         for cat in cats:
+            if cat in ("Searching algorithms", "Sorting algorithms"):
+                catalog = SearchCatalog(self.main_nb, [c for c in classes if c.category == cat], title=cat)
+                self.main_nb.add(catalog, text=f"   {cat}   ")
+                continue
             inner = ttk.Notebook(self.main_nb, style="Side.TNotebook")
             self.main_nb.add(inner, text=f"   {cat}   ")
             for cls in sorted((c for c in classes if c.category == cat),
