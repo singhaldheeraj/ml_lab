@@ -22,9 +22,10 @@ ML Lab is a desktop learning playground built with Tkinter, Matplotlib, and NumP
 | `ml_lab/core/registry.py` | Plugin decorator and package discovery. |
 | `ml_lab/gui/app.py` | Main window, category tabs, startup, and Home content. |
 | `ml_lab/gui/algo_tab.py` | Per-algorithm controls, figure, animation, and explanation/log views. |
-| `ml_lab/gui/search_tab.py` | Shared filterable, grouped, scrollable searching/sorting catalogs with lazy demo construction. |
+| `ml_lab/gui/search_tab.py` | Shared filterable, grouped catalogs for searching, sorting, optimization, and miscellaneous demos with lazy view construction. |
 | `ml_lab/algorithms/searching/` | One file per searching algorithm; shared trace and visualization modules are underscore-prefixed. |
 | `ml_lab/algorithms/sorting/` | One file per sorting algorithm; shared state, counters, visualization, and tests are underscore-prefixed. |
+| `ml_lab/algorithms/optimization/` | Optimization and loss demos; gradient training reuses the supervised linear-regression model. |
 | `ml_lab/gui/widgets.py` | Reusable Tk parameter panel, tooltips, and scrollable frame. |
 | `ml_lab/selftest.py` | Headless smoke tests for every registered demo and parameter choice. |
 
@@ -46,8 +47,36 @@ For a minimal working example, copy the pattern in `ml_lab/algorithms/_TEMPLATE.
 - **Unsupervised:** K-Means, DBSCAN, mean shift, hierarchical clustering, Gaussian mixtures, self-organizing maps, spectral clustering, PCA, t-SNE, and anomaly detection.
 - **Robotics Demos:** Monte Carlo Localization (particle filter), Kalman GPS/odometry fusion, DBSCAN LiDAR segmentation, Gaussian Naive Bayes terrain recognition, Bayesian occupancy-grid mapping, and Gaussian Process actuator calibration.
 - **Reinforcement Learning:** Q-learning, SARSA, Expected SARSA, Double Q-learning, Monte Carlo control, Dyna-Q, value iteration, and policy iteration in a shared grid-world environment.
-- **Searching algorithms:** 35 demos spanning array/index lookup, graph/path search, string matching, spatial queries, local optimization, adversarial game trees, and constraint/combinatorial search.
+- **Searching algorithms:** 34 demos spanning array/index lookup, graph/path search, string matching, spatial queries, local optimization (including genetic search), route optimization (traveling salesman), and constraint/combinatorial search.
 - **Sorting algorithms:** 20 demos spanning comparison, divide-and-conquer, heap/tree, distribution, adaptive, and sorting-network algorithms.
+- **Optimization:** mean squared error, quadratic gradient descent, batch gradient descent, stochastic gradient descent, mini-batch gradient descent, and Lagrange multiplier optimization.
+- **Miscellaneous:** adversarial game-tree search with minimax, alpha-beta pruning, and Monte Carlo tree search/UCT. Set `category = "Miscellaneous"` on future demos that do not fit another category; use `group` to organize the selector.
+
+## Optimization catalog
+
+The Optimization tab uses the grouped, filterable catalog and the existing animation,
+parameter, explanation, source, and reload controls. The Supervised linear-regression
+demo remains unchanged; dedicated batch, stochastic, and mini-batch views reuse its
+model and loss-surface visualization without duplicating the training mathematics.
+
+| Group | Demos |
+| --- | --- |
+| Loss functions | MSE: fixed line, per-sample squared residuals, running mean, and final MSE/RMSE |
+| Gradient-based training | Gradient descent on an adjustable convex quadratic; full-batch, single-sample SGD, and mini-batch least-squares training |
+| Constrained optimization | Lagrange multipliers: nearest point to a target subject to a selectable linear equality |
+
+MSE is a loss function rather than an optimization algorithm. Gradient demos show
+objective histories and parameter paths; large learning rates can diverge, while
+constant-rate SGD can remain noisy. The Lagrange demo constructs the exact analytic
+solution of a strictly convex quadratic with one linear equality. Its intermediate
+projection points need not satisfy the constraint; it is not a general nonlinear
+solver or an iterative convergence demonstration.
+
+```console
+python -m unittest ml_lab.algorithms.optimization._tests -v
+python -m ml_lab.selftest optimization
+python -m ml_lab.selftest optimization --choices
+```
 
 ## Searching catalog
 
@@ -62,9 +91,15 @@ Reload code controls. Source opens the selected algorithm's own implementation f
 | Graph and path | BFS, DFS, depth-limited, iterative deepening DFS, uniform-cost/Dijkstra, A*/weighted A*, greedy best-first, beam, bidirectional BFS, IDA* |
 | String and text | Naive substring, KMP, Rabin-Karp, Boyer-Moore-Horspool, trie exact/prefix lookup |
 | Spatial | K-d tree nearest neighbor, quadtree circular-range search |
-| Local optimization | Hill climbing/random restarts, simulated annealing, tabu search |
-| Adversarial | Minimax, alpha-beta pruning, Monte Carlo tree search/UCT |
+| Local optimization | Hill climbing/random restarts, simulated annealing, tabu search, genetic algorithm (tournament selection, coordinate crossover, mutation, elitism) |
+| Route optimization | Traveling salesman: exhaustive exact search or nearest neighbor followed by 2-opt |
 | Constraints and combinatorial | N-Queens backtracking with optional MRV, branch-and-bound 0/1 knapsack |
+
+The three adversarial demos remain in their individual searching source modules,
+but appear in the Miscellaneous tab under "Adversarial game-tree search".
+Genetic search shows the population and best-so-far trail on the existing landscape.
+TSP shows city labels, a closed tour and its distance. Exact TSP is limited to nine
+cities to bound factorial work; the 2-opt mode guarantees only a local optimum.
 
 This covers the major families, not every published algorithm or specialized variant.
 Arrays are generated sorted to support cross-algorithm comparisons; sorting/data

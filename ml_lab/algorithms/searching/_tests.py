@@ -13,8 +13,68 @@ class SearchTests(unittest.TestCase):
         classes, errors = discover()
         self.assertFalse(errors)
         searching = [cls for cls in classes if cls.__module__.startswith("ml_lab.algorithms.searching.")]
-        self.assertEqual(len(searching), 35)
-        self.assertEqual({cls.category for cls in searching}, {"Searching algorithms"})
+        self.assertEqual(len(searching), 37)
+        self.assertEqual({cls.category for cls in searching}, {"Searching algorithms", "Miscellaneous"})
+        miscellaneous = [cls for cls in searching if cls.category == "Miscellaneous"]
+        self.assertEqual({cls.name for cls in miscellaneous},
+                         {"Minimax Search", "Alpha-Beta Pruning", "Monte Carlo Tree Search (UCT)"})
+
+    def test_genetic_search(self):
+        from .genetic_search import GeneticSearchDemo
+
+        demo = GeneticSearchDemo()
+        for seed in (0, 7):
+            for mutation_rate in (0.0, 0.15, 1.0):
+                params = Values(**{param.name: param.default for param in demo.get_params()})
+                params.seed, params.mutation_rate = seed, mutation_rate
+                params.generations, params.population_size = 5, 7
+                data = demo.make_data(params)
+                steps = list(demo.search(data, params))
+                last = steps[-1]
+                self.assertTrue(last.done and last.found)
+                self.assertEqual(last.comparisons, 42)
+                scores = [data["heights"][node] for node in last.path]
+                self.assertGreaterEqual(scores[0], data["heights"][data["start"]])
+                self.assertEqual(scores, sorted(scores))
+                self.assertEqual(last.result, list(demo.search(data, params))[-1].result)
+                for step in steps:
+                    for node in step.frontier:
+                        self.assertTrue(all(0 <= node[axis] < data["heights"].shape[axis] for axis in (0, 1)))
+
+    def test_traveling_salesman(self):
+        from itertools import permutations
+        from .traveling_salesman import TravelingSalesmanDemo
+
+        demo = TravelingSalesmanDemo()
+        params = Values(**{param.name: param.default for param in demo.get_params()})
+        params.cities = 5
+        for layout in ("random", "circle", "clusters"):
+            params.layout = layout
+            data = demo.make_data(params)
+            points = data["points"]
+
+            def length(tour):
+                return sum(float(np.linalg.norm(points[first] - points[second]))
+                           for first, second in zip(tour, tour[1:]))
+
+            optimum = min(length([0, *ordering, 0]) for ordering in permutations(range(1, 5)))
+            for method in ("exhaustive (exact)", "nearest neighbor + 2-opt"):
+                params.method = method
+                steps = list(demo.search(data, params))
+                last = steps[-1]
+                self.assertTrue(last.done and last.found)
+                self.assertEqual(last.result[0], 0)
+                self.assertEqual(last.result[-1], 0)
+                self.assertEqual(sorted(last.result[:-1]), list(range(5)))
+                self.assertAlmostEqual(last.cost, length(last.result))
+                if method == "exhaustive (exact)":
+                    self.assertAlmostEqual(last.cost, optimum)
+                    self.assertEqual(last.comparisons, 24)
+                else:
+                    closed_costs = [step.cost for step in steps if len(step.path) == 6]
+                    self.assertEqual(closed_costs, sorted(closed_costs, reverse=True))
+                repeated = list(demo.search(data, params))[-1]
+                self.assertEqual(last.result, repeated.result)
 
     def test_game_searches(self):
         from .minimax_search import MinimaxSearchDemo

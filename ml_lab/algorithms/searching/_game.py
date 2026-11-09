@@ -5,6 +5,7 @@ from ._base import SearchDemo
 
 
 class GameSearchDemo(SearchDemo):
+    category = "Miscellaneous"
     family = "game"
     group = "Adversarial game-tree search"
     params = [Choice("move_order", "left first", ("left first", "right first"))]
